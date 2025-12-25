@@ -16,67 +16,70 @@
       </nav>
       <div class="admin-controls">
         <button id="adminBtn">Admin</button>
-        <button id="adminLogout" style="display:none">Logout</button>
-        <span id="adminIndicator" class="admin-indicator" style="display:none">(admin)</span>
+        <button id="adminLogout" style="display: none">Logout</button>
+        <span id="adminIndicator" class="admin-indicator" style="display: none"
+          >(admin)</span
+        >
       </div>
     </header>
     <marquee> <h1>Chào mừng đến với trang thành viên tổ 2</h1></marquee>
     <div>
       <main>
         <!-- <section id="home" class="page"> -->
-            <form id="memberForm">
-              <label for="name">Họ và tên:</label>
-              <input type="text" id="name" name="name" required />
-              <br />
-              <br />
-              <label for="gender">Giới tính:</label>
-              <select id="gender" name="gender">
-                <option value="male">Nam</option>
-                <option value="female">Nữ</option>
-                <option value="other">Khác</option>
-              </select>
-              <br />
-              <br />
-              <label for="date">Ngày sinh:</label>
-              <input type="date" id="date" name="date" />
-              <br />
-              <br />
-              <label for="address">Địa chỉ:</label>
-              <input type="text" id="address" name="address" />
-              <br />
-              <br />
-              <label for="face">Facebook:</label>
-              <input type="text" id="face" name="face" />
-              <br />
-              <br />
-              <label for="phone">Số điện thoại:</label>
-              <input type="text" id="phone" name="phone" />
-              <br />
-              <br />
-              <label for="subject">Tổ hợp:</label>
-              <select id="subject" name="subject">
-                <option value="tự nhiên">Khoa học tự nhiên</option>
-                <option value="xã hội">Xã hội</option>
-              </select> 
-  </main>
-              <br />
-                <button type="submit" value="Lưu thông tin">Upload</button>
-              </form>
-          <!-- </section>  -->
-             </div> 
-            
-              <br />
-              <br />
-            <h3>Danh sách thành viên đã lưu</h3>
-            <div id="submissions">
-              <!-- Nơi hiển thị các bản ghi đã lưu -->
-            </div>
-    <p> <strong>Lưu ý:</strong>  Nhập thông tin và upload <span id="status"></span></p>
-      <div id="displayArea"></div>
-     <script>
-        window.addEventListener('load', function () {
+        <form id="memberForm">
+          <label for="name">Họ và tên:</label>
+          <input type="text" id="name" name="name" required />
+          <br />
+          <br />
+          <label for="gender">Giới tính:</label>
+          <select id="gender" name="gender">
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+            <option value="other">Khác</option>
+          </select>
+          <br />
+          <br />
+          <label for="date">Ngày sinh:</label>
+          <input type="date" id="date" name="date" />
+          <br />
+          <br />
+          <label for="address">Địa chỉ:</label>
+          <input type="text" id="address" name="address" />
+          <br />
+          <br />
+          <label for="face">Facebook:</label>
+          <input type="text" id="face" name="face" />
+          <br />
+          <br />
+          <label for="phone">Số điện thoại:</label>
+          <input type="text" id="phone" name="phone" />
+          <br />
+          <br />
+          <label for="subject">Tổ hợp:</label>
+          <select id="subject" name="subject">
+            <option value="tự nhiên">Khoa học tự nhiên</option>
+            <option value="xã hội">Xã hội</option>
+          </select>
+          <br />
+          <button type="submit" value="Lưu thông tin">Upload</button>
+        </form>
+        <!-- </section>  -->
+      </main>
+    </div>
+    <br />
+    <br />
+    <h3>Danh sách thành viên đã lưu</h3>
+    <div id="submissions">
+      <!-- Nơi hiển thị các bản ghi đã lưu -->
+    </div>
+    <p>
+      <strong>Lưu ý:</strong> Nhập thông tin và upload <span id="status"></span>
+    </p>
+    <div id="displayArea"></div>
+    <script>
+      window.addEventListener("load", function () {
         window.scrollTo(0, 0);
-        });
+      });
     </script>
     <script src="script.js"></script>
   </body>
