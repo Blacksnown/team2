@@ -32,14 +32,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Make this device admin by default (sessionStorage). No admin UI required.
-  try {
-    sessionStorage.setItem(ADMIN_SESSION, "1");
-  } catch (e) {
-    console.error("Could not set admin session", e);
-  }
+  // flags used by isAdmin; declare early to avoid TDZ when isAdmin is called
+  let useFirestore = false;
+  let remoteAdmin = null;
 
+  // isAdmin will be resolved later; when Firestore is enabled we use remote admin doc,
+  // otherwise fall back to local session flag. (session flag set after Firestore init)
   function isAdmin() {
+    if (useFirestore) {
+      return remoteAdmin && remoteAdmin.adminId === CLIENT_ID;
+    }
     return sessionStorage.getItem(ADMIN_SESSION) === "1";
   }
 
@@ -63,14 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   const DEVICE_NAME = getDeviceName();
-  if (deviceNameDisplay && isAdmin()) {
-    deviceNameDisplay.style.display = "";
-    deviceNameDisplay.textContent = `Thiết bị: ${DEVICE_NAME}`;
-  }
+  // deviceNameDisplay will be updated after admin state is known (remote or local)
 
   // Firebase / Firestore integration (optional)
-  let useFirestore = false;
   let db = null;
+  let adminRef = null;
   try {
     if (typeof FIREBASE_CONFIG !== "undefined" && FIREBASE_CONFIG) {
       // firebase compat SDK loaded from CDN in index.html
@@ -78,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.firestore();
         useFirestore = true;
+        adminRef = db.collection("meta").doc("admin");
       } catch (e) {
         console.warn("Firebase init failed, falling back to localStorage", e);
         useFirestore = false;
@@ -87,9 +87,199 @@ document.addEventListener("DOMContentLoaded", () => {
     // FIREBASE_CONFIG not defined or firebase SDK not loaded
   }
 
+  // If Firestore is not used, mark this device admin locally
+  if (!useFirestore) {
+    try {
+      sessionStorage.setItem(ADMIN_SESSION, "1");
+    } catch (e) {
+      console.error("Could not set admin session", e);
+    }
+  }
+
+  // Local (device-only) admin keys
+  const LOCAL_ADMIN_PW_KEY = "team2_local_admin_pw"; // stores hashed pw
+  const LOCAL_ADMIN_SESSION = "team2_local_admin_session"; // session flag while logged in
+
+  async function hashPassword(pw) {
+    const enc = new TextEncoder();
+    const data = enc.encode(pw);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function localAdminExists() {
+    try {
+      return !!localStorage.getItem(LOCAL_ADMIN_PW_KEY);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isLocalAdminLoggedIn() {
+    return sessionStorage.getItem(LOCAL_ADMIN_SESSION) === "1";
+  }
+
+  async function setLocalAdmin() {
+    const p1 = prompt("Tạo mật khẩu admin (cục bộ) — nhớ giữ an toàn:");
+    if (!p1) return alert("Mật khẩu không được rỗng.");
+    const p2 = prompt("Xác nhận mật khẩu:");
+    if (p1 !== p2) return alert("Mật khẩu không khớp.");
+    const h = await hashPassword(p1);
+    localStorage.setItem(LOCAL_ADMIN_PW_KEY, h);
+    sessionStorage.setItem(LOCAL_ADMIN_SESSION, "1");
+    updateLocalAdminUI();
+    alert(
+      "Mật khẩu admin được tạo và bạn đã đăng nhập (chỉ trên thiết bị này)."
+    );
+  }
+
+  async function loginLocalAdmin() {
+    const stored = localStorage.getItem(LOCAL_ADMIN_PW_KEY);
+    if (!stored) return alert("Chưa có mật khẩu admin trên thiết bị này.");
+    const attempt = prompt("Nhập mật khẩu admin (cục bộ):");
+    if (!attempt) return;
+    const h = await hashPassword(attempt);
+    if (h === stored) {
+      sessionStorage.setItem(LOCAL_ADMIN_SESSION, "1");
+      updateLocalAdminUI();
+      alert("Đăng nhập admin thành công (cục bộ).");
+    } else {
+      alert("Mật khẩu không đúng.");
+    }
+  }
+
+  function logoutLocalAdmin() {
+    sessionStorage.removeItem(LOCAL_ADMIN_SESSION);
+    updateLocalAdminUI();
+  }
+
+  function updateLocalAdminUI() {
+    const setBtn = document.getElementById("setLocalAdminBtn");
+    const loginBtn = document.getElementById("loginLocalAdminBtn");
+    const logoutBtn = document.getElementById("logoutLocalAdminBtn");
+    const indicator = document.getElementById("localAdminIndicator");
+    const deviceNameEl = document.getElementById("deviceNameDisplay");
+
+    const exists = localAdminExists();
+    const logged = isLocalAdminLoggedIn();
+
+    if (exists) {
+      if (setBtn) setBtn.style.display = "none";
+      if (logged) {
+        if (loginBtn) loginBtn.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "";
+        if (indicator) indicator.style.display = "";
+        if (deviceNameEl) {
+          deviceNameEl.style.display = "";
+          deviceNameEl.textContent = `Thiết bị: ${DEVICE_NAME}`;
+        }
+      } else {
+        if (loginBtn) loginBtn.style.display = "";
+        if (logoutBtn) logoutBtn.style.display = "none";
+        if (indicator) indicator.style.display = "none";
+        if (deviceNameEl) deviceNameEl.style.display = "none";
+      }
+    } else {
+      // no local admin yet
+      if (setBtn) setBtn.style.display = "";
+      if (loginBtn) loginBtn.style.display = "none";
+      if (logoutBtn) logoutBtn.style.display = "none";
+      if (indicator) indicator.style.display = "none";
+      if (deviceNameEl) deviceNameEl.style.display = "none";
+    }
+  }
+
+  // wire local admin buttons
+  const setLocalBtn = document.getElementById("setLocalAdminBtn");
+  if (setLocalBtn) setLocalBtn.addEventListener("click", () => setLocalAdmin());
+  const loginLocalBtn = document.getElementById("loginLocalAdminBtn");
+  if (loginLocalBtn)
+    loginLocalBtn.addEventListener("click", () => loginLocalAdmin());
+  const logoutLocalBtn = document.getElementById("logoutLocalAdminBtn");
+  if (logoutLocalBtn)
+    logoutLocalBtn.addEventListener("click", () => logoutLocalAdmin());
+
   function saveList(list) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
+
+  // Admin helpers when using Firestore
+  function updateAdminUIFromRemote() {
+    const currentAdminDisplay = document.getElementById("currentAdminDisplay");
+    const claimBtn = document.getElementById("claimAdminBtn");
+    const deviceNameEl = document.getElementById("deviceNameDisplay");
+    if (!useFirestore || !adminRef) {
+      if (currentAdminDisplay)
+        currentAdminDisplay.textContent = "Quản trị: (local)";
+      if (claimBtn) claimBtn.style.display = "none";
+      if (deviceNameEl) {
+        deviceNameEl.style.display = "";
+        deviceNameEl.textContent = `Thiết bị: ${DEVICE_NAME}`;
+      }
+      return;
+    }
+    if (remoteAdmin && remoteAdmin.adminId) {
+      if (currentAdminDisplay) {
+        currentAdminDisplay.textContent = `Quản trị: ${
+          remoteAdmin.adminName || remoteAdmin.adminId
+        }`;
+      }
+      // update local admin UI state (show device name if this device is admin)
+      updateLocalAdminUI();
+      if (claimBtn) claimBtn.style.display = "none";
+      if (deviceNameEl) {
+        if (remoteAdmin.adminId === CLIENT_ID) {
+          deviceNameEl.style.display = "";
+          deviceNameEl.textContent = `Thiết bị: ${DEVICE_NAME}`;
+        } else {
+          deviceNameEl.style.display = "none";
+        }
+      }
+    } else {
+      if (currentAdminDisplay)
+        currentAdminDisplay.textContent = "Quản trị: (chưa có)";
+      if (claimBtn) claimBtn.style.display = "";
+      if (deviceNameEl) deviceNameEl.style.display = "none";
+    }
+  }
+
+  async function claimAdmin() {
+    if (!adminRef || !db) return alert("Không thể kết nối tới Firestore.");
+    try {
+      await db.runTransaction(async (tx) => {
+        const doc = await tx.get(adminRef);
+        if (doc.exists && doc.data() && doc.data().adminId) {
+          throw new Error("Đã có admin khác.");
+        }
+        tx.set(adminRef, { adminId: CLIENT_ID, adminName: DEVICE_NAME });
+      });
+      alert("Thiết bị đã được đặt làm admin.");
+    } catch (e) {
+      alert("Không thể đặt admin: " + (e.message || e));
+    }
+  }
+
+  if (useFirestore && adminRef) {
+    // listen admin doc
+    adminRef.onSnapshot(
+      (doc) => {
+        const data = doc.exists ? doc.data() : null;
+        remoteAdmin = data
+          ? { adminId: data.adminId, adminName: data.adminName }
+          : null;
+        updateAdminUIFromRemote();
+      },
+      (err) => console.error("adminRef onSnapshot error", err)
+    );
+    // attach claim button
+    const claimBtnEl = document.getElementById("claimAdminBtn");
+    if (claimBtnEl) claimBtnEl.addEventListener("click", claimAdmin);
+  }
+
+  // Update UI now (covers both local and remote cases)
+  updateAdminUIFromRemote();
 
   function escapeHtml(s) {
     return String(s || "").replace(

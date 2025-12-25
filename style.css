@@ -125,6 +125,26 @@ button {
 .submission-item button {
   margin-top: 0.5rem;
 }
+.admin-area {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 1rem;
+}
+.admin-area #currentAdminDisplay {
+  color: #fff;
+  font-weight: 600;
+}
+.admin-area button {
+  background: #ffd873;
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+.admin-area #localAdminIndicator {
+  color: #ffd;
+  margin-left: 0.5rem;
+  font-weight: 700;
+}
 
 /* Form validation styles */
 .form-errors {

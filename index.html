@@ -23,6 +23,25 @@
         <!-- device info (name shown for admin) -->
         <div class="device-info">
           <span id="deviceNameDisplay" style="display: none"></span>
+          <div class="admin-area">
+            <span id="currentAdminDisplay">Quản trị: (chưa có)</span>
+            <button id="claimAdminBtn" style="display: none">
+              Đặt thiết bị này làm Admin
+            </button>
+            <!-- Local (device-only) admin controls -->
+            <button id="setLocalAdminBtn" style="display: none">
+              Tạo mật khẩu Admin (cục bộ)
+            </button>
+            <button id="loginLocalAdminBtn" style="display: none">
+              Đăng nhập Admin (cục bộ)
+            </button>
+            <button id="logoutLocalAdminBtn" style="display: none">
+              Đăng xuất Admin
+            </button>
+            <span id="localAdminIndicator" style="display: none"
+              >(Admin cục bộ)</span
+            >
+          </div>
         </div>
         <form id="memberForm">
           <label for="name">Họ và tên:</label>
