@@ -12,8 +12,14 @@
       <nav class="site-nav">
         <ul>
           <li><a href="index.html">Trang chủ</a></li>
+        </ul>
       </nav>
-   </header>
+      <div class="admin-controls">
+        <button id="adminBtn">Admin</button>
+        <button id="adminLogout" style="display:none">Logout</button>
+        <span id="adminIndicator" class="admin-indicator" style="display:none">(admin)</span>
+      </div>
+    </header>
     <marquee> <h1>Chào mừng đến với trang thành viên tổ 2</h1></marquee>
     <div>
       <main>
@@ -54,10 +60,11 @@
               </select> 
   </main>
               <br />
+                <button type="submit" value="Lưu thông tin">Upload</button>
               </form>
           <!-- </section>  -->
              </div> 
-              <button type="submit" value="Lưu thông tin">Upload</button>
+            
               <br />
               <br />
             <h3>Danh sách thành viên đã lưu</h3>
