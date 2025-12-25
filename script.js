@@ -68,6 +68,25 @@ document.addEventListener("DOMContentLoaded", () => {
     deviceNameDisplay.textContent = `Thiết bị: ${DEVICE_NAME}`;
   }
 
+  // Firebase / Firestore integration (optional)
+  let useFirestore = false;
+  let db = null;
+  try {
+    if (typeof FIREBASE_CONFIG !== "undefined" && FIREBASE_CONFIG) {
+      // firebase compat SDK loaded from CDN in index.html
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        useFirestore = true;
+      } catch (e) {
+        console.warn("Firebase init failed, falling back to localStorage", e);
+        useFirestore = false;
+      }
+    }
+  } catch (e) {
+    // FIREBASE_CONFIG not defined or firebase SDK not loaded
+  }
+
   function saveList(list) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
@@ -185,10 +204,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function renderAll() {
-    const list = loadList();
+  // Render a given list of items (local or remote)
+  function renderList(list) {
     submissionsEl.innerHTML = "";
-    if (!list.length) {
+    if (!list || !list.length) {
       submissionsEl.innerHTML = "<p>Chưa có hồ sơ nào.</p>";
       return;
     }
@@ -213,16 +232,26 @@ document.addEventListener("DOMContentLoaded", () => {
       )}</div>
       `;
 
-      // Only admin can delete entries (this device is admin by default)
+      // Only admin can delete entries
       if (isAdmin()) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = "Xóa";
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", async () => {
           if (!confirm("Bạn có chắc muốn xóa bản ghi này?")) return;
-          const newList = loadList().filter((i) => i.id !== item.id);
-          saveList(newList);
-          renderAll();
+          try {
+            if (useFirestore && db) {
+              // item.id is firestore doc id
+              await db.collection("submissions").doc(item.id).delete();
+            } else {
+              const newList = loadList().filter((i) => i.id !== item.id);
+              saveList(newList);
+              renderList(newList);
+            }
+          } catch (e) {
+            console.error("Delete failed", e);
+            alert("Xóa thất bại.");
+          }
         });
         li.appendChild(btn);
       }
@@ -239,7 +268,40 @@ document.addEventListener("DOMContentLoaded", () => {
     submissionsEl.appendChild(ul);
   }
 
-  form.addEventListener("submit", (e) => {
+  // Firestore listener
+  async function listenRemote() {
+    if (!db) return;
+    try {
+      db.collection("submissions")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(
+          (snapshot) => {
+            const list = snapshot.docs.map((doc) => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                name: data.name || "",
+                gender: data.gender || "",
+                date: data.date || "",
+                address: data.address || "",
+                face: data.face || "",
+                phone: data.phone || "",
+                subject: data.subject || "",
+                owner: data.owner || "",
+                ownerName: data.ownerName || "",
+                createdAt: data.createdAt ? data.createdAt.toDate() : null,
+              };
+            });
+            renderList(list);
+          },
+          (err) => console.error("Firestore onSnapshot error", err)
+        );
+    } catch (e) {
+      console.error("listenRemote failed", e);
+    }
+  }
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
     const valid = validateForm(fd);
@@ -252,14 +314,36 @@ document.addEventListener("DOMContentLoaded", () => {
     entry.owner = CLIENT_ID;
     entry.ownerName = DEVICE_NAME;
 
-    const list = loadList();
-    list.unshift(entry); // newest first
-    saveList(list);
-
-    renderAll();
+    if (useFirestore && db) {
+      try {
+        await db.collection("submissions").add({
+          ...entry,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Firestore listener will update the UI
+      } catch (e) {
+        console.error("Failed to save to Firestore", e);
+        // fallback to local
+        const list = loadList();
+        list.unshift(entry);
+        saveList(list);
+        renderList(list);
+      }
+    } else {
+      const list = loadList();
+      list.unshift(entry); // newest first
+      saveList(list);
+      renderList(list);
+    }
     form.reset();
   });
 
   // initial render
-  renderAll();
+  if (useFirestore && db) {
+    // start realtime listener
+    listenRemote();
+  } else {
+    // local only
+    renderList(loadList());
+  }
 });
