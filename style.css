@@ -1,0 +1,84 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+body.fullscreen-bg {
+  background-image: url("./image/ChatGPT Image 15_25_59 22 thg 12, 2025.png");
+  background-repeat: no-repeat;
+  /* phân tử giúp ảnh full màn hình và loại bỏ viền */
+  background-size: cover;
+  background-position: center center; /*căn pử ở giữa theo ngang dọc cao */
+  min-height: 100vh;
+}
+h1 {
+  background-color: black;
+  color: white;
+  font-size: xx-large;
+  font-weight: 800;
+  border: 2px solid rgb(12, 87, 68);
+  width: fit-content;
+}
+
+/* Navigation styles */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+}
+.site-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: white;
+}
+.site-nav ul {
+  background-color: rgba(245, 245, 245, 0.904);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 1rem;
+}
+.site-nav a {
+  color: rgb(100, 20, 9);
+  text-decoration: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+}
+
+/* Page sections */
+.page {
+  padding: 2rem;
+  color: rgb(0, 0, 0);
+}
+
+@media (max-width: 600px) {
+  .site-nav ul {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+div {
+  background-color: rgb(172, 168, 163);
+  border: 1px solid rgba(124, 108, 194, 0.2);
+  border-radius: 4px;
+}
+input {
+  background-color: rgba(247, 243, 243, 0.904);
+  border: 1px solid rgba(99, 94, 121, 0.2);
+  border-radius: 3px;
+  padding: 0.5rem;
+}
+label {
+  background-color: rgb(201, 141, 63);
+  padding: 0.5rem;
+  border: 1px solid rgba(124, 108, 194, 0.2);
+  border-radius: 4px;
+}
+select {
+  border: 2px solid rgba(99, 94, 121, 0.2);
+  border-radius: 3px;
+  padding: 0.5rem;
+}
