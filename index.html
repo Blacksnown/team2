@@ -13,84 +13,64 @@
         <ul>
           <li><a href="index.html">Trang chủ</a></li>
       </nav>
-    </header>
-     <marquee> <h1>Chào mừng đến với trang thành viên tổ 2</h1></marquee>
-<div>
-  
+   </header>
+    <marquee> <h1>Chào mừng đến với trang thành viên tổ 2</h1></marquee>
+    <div>
       <main>
-        <section id="home" class="page">
-        
-          <label for="name">Họ và tên:</label>
-          <input type="text" id="name" name="name" />
-          <br />
-          <br />
-          <label for="gender">Giới tính:</label>
-          <select id="gender" name="gender">
-            <option value="male">Nam</option>
-            <option value="female">Nữ</option>
-            <option value="other">Khác</option>
-          </select>
-          <br />
-          <br />
-          <label for="date">Ngày sinh:</label>
-          <input type="date" id="date" name="date" />
-          <br />
-          <br />
-          <label for="address">Địa chỉ:</label>
-          <input type="text" id="address" name="address" />
-          <br />
-          <br />
-          <label for="face">Facebook:</label>
-          <input type="text" id="face" name="face" />
-          <br />
-          <br />
-          <label for="phone">Số điện thoại:</label>
-          <input type="text" id="phone" name="phone" />
-          <br />
-          <br />
-          <label for="subject">Tổ hợp:</label>
-          <select id="subject" name="subject">
-            <option value="tự nhiên">Khoa học tự nhiên</option>
-            <option value="xã hội">Xã hội</option>
-          </select>
-          <br />
-          <br />
-          <br />
-  
-          <!-- <option value="toan-ly-hoa">Toán Lý Hóa</option>
-            <option value="toan-ly-anh">Toán Lý Anh</option>
-            <option value="toan-hoa-sinh">Toán Hóa Sinh</option>
-            <option value="van-su-dia">Văn Sử Địa</option> -->
-  
-          <button type="submit" value="gửi thông tin">Upload</button>
-        </section>  
-      </main>
-</div>
-<!-- 
-      <section id="gioithieu" class="page">
-        <h2>Giới thiệu</h2>
-        <p>Đây là trang giới thiệu (thêm nội dung tại đây).</p>
-      </section>
-
-      <section id="lienhe" class="page">
-        <h2>Liên hệ</h2>
-        <p>Thông tin liên hệ: email@example.com</p>
-      </section> -->
-  
-
-    <!-- <div id="0" class="page" style="display: none">
-      <h2>Lớp 10</h2>
-    </div>
-
-    <div id="1" class="page" style="display: none">
-      <h2>Lớp 11</h2>
-    </div> -->
-
-    <script>
-      // Simple script: ensure the page loads scrolled to top (optional)
-      window.addEventListener("load", function () {
+        <!-- <section id="home" class="page"> -->
+            <form id="memberForm">
+              <label for="name">Họ và tên:</label>
+              <input type="text" id="name" name="name" required />
+              <br />
+              <br />
+              <label for="gender">Giới tính:</label>
+              <select id="gender" name="gender">
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
+              <br />
+              <br />
+              <label for="date">Ngày sinh:</label>
+              <input type="date" id="date" name="date" />
+              <br />
+              <br />
+              <label for="address">Địa chỉ:</label>
+              <input type="text" id="address" name="address" />
+              <br />
+              <br />
+              <label for="face">Facebook:</label>
+              <input type="text" id="face" name="face" />
+              <br />
+              <br />
+              <label for="phone">Số điện thoại:</label>
+              <input type="text" id="phone" name="phone" />
+              <br />
+              <br />
+              <label for="subject">Tổ hợp:</label>
+              <select id="subject" name="subject">
+                <option value="tự nhiên">Khoa học tự nhiên</option>
+                <option value="xã hội">Xã hội</option>
+              </select> 
+  </main>
+              <br />
+              </form>
+          <!-- </section>  -->
+             </div> 
+              <button type="submit" value="Lưu thông tin">Upload</button>
+              <br />
+              <br />
+            <h3>Danh sách thành viên đã lưu</h3>
+            <div id="submissions">
+              <!-- Nơi hiển thị các bản ghi đã lưu -->
+            </div>
+    <p> <strong>Lưu ý:</strong>  Nhập thông tin và upload <span id="status"></span></p>
+      <div id="displayArea"></div>
+     <script>
+        window.addEventListener('load', function () {
         window.scrollTo(0, 0);
-      });
+        });
     </script>
+    <script src="script.js"></script>
   </body>
 </html>

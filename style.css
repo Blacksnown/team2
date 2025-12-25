@@ -13,11 +13,11 @@ body.fullscreen-bg {
   min-height: 100vh;
 }
 h1 {
-  background-color: black;
+  background-color: rgb(9, 82, 124);
   color: white;
-  font-size: xx-large;
+  font-size: 5rem;
   font-weight: 800;
-  border: 2px solid rgb(12, 87, 68);
+  border: 2px solid rgb(37, 45, 90);
   width: fit-content;
 }
 
@@ -78,7 +78,19 @@ label {
   border-radius: 4px;
 }
 select {
-  border: 2px solid rgba(99, 94, 121, 0.2);
+  border: 2px solid rgba(67, 63, 88, 0.2);
   border-radius: 3px;
   padding: 0.5rem;
+}
+strong {
+  background-color: black;
+  color: red;
+  text-align: center;
+}
+button {
+  background-color: rgb(167, 228, 245);
+  border: 2px solid rgba(3, 2, 5, 0.2);
+  border-radius: 3px;
+  padding: 0.5rem 1rem;
+  font-size: large;
 }
