@@ -14,18 +14,16 @@
           <li><a href="index.html">Trang chủ</a></li>
         </ul>
       </nav>
-      <div class="admin-controls">
-        <button id="adminBtn">Admin</button>
-        <button id="adminLogout" style="display: none">Logout</button>
-        <span id="adminIndicator" class="admin-indicator" style="display: none"
-          >(admin)</span
-        >
-      </div>
+      <!-- admin controls removed -->
     </header>
     <marquee> <h1>Chào mừng đến với trang thành viên tổ 2</h1></marquee>
     <div>
       <main>
         <!-- <section id="home" class="page"> -->
+        <!-- device info (name shown for admin) -->
+        <div class="device-info">
+          <span id="deviceNameDisplay" style="display: none"></span>
+        </div>
         <form id="memberForm">
           <label for="name">Họ và tên:</label>
           <input type="text" id="name" name="name" required />
@@ -61,7 +59,8 @@
             <option value="xã hội">Xã hội</option>
           </select>
           <br />
-          <button type="submit" value="Lưu thông tin">Upload</button>
+          <div id="formErrors" class="form-errors" aria-live="polite"></div>
+          <button type="submit" value="Lưu thông tin">Lưu thông tin</button>
         </form>
         <!-- </section>  -->
       </main>

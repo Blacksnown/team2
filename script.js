@@ -1,13 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
   const STORAGE_KEY = "team2_submissions";
   const CLIENT_KEY = "team2_clientId";
-  const ADMIN_PW_KEY = "team2_admin_pw";
   const ADMIN_SESSION = "team2_admin_session";
+  const DEVICE_NAME_KEY = "team2_device_name";
   const form = document.getElementById("memberForm");
   const submissionsEl = document.getElementById("submissions");
-  const adminBtn = document.getElementById("adminBtn");
-  const adminLogout = document.getElementById("adminLogout");
-  const adminIndicator = document.getElementById("adminIndicator");
+  const deviceNameDisplay = document.getElementById("deviceNameDisplay");
 
   // Ensure each browser/user has a persistent client id so we can mark ownership
   function getClientId() {
@@ -24,81 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   const CLIENT_ID = getClientId();
-
-  // admin helpers
-  function isAdmin() {
-    return sessionStorage.getItem(ADMIN_SESSION) === "1";
-  }
-
-  async function hashPassword(pw) {
-    const enc = new TextEncoder();
-    const data = enc.encode(pw);
-    const hash = await crypto.subtle.digest("SHA-256", data);
-    // convert to hex
-    return Array.from(new Uint8Array(hash))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
-
-  function updateAdminUI() {
-    if (isAdmin()) {
-      adminLogout.style.display = "";
-      adminBtn.style.display = "none";
-      adminIndicator.style.display = "";
-    } else {
-      adminLogout.style.display = "none";
-      adminBtn.style.display = "";
-      adminIndicator.style.display = "none";
-    }
-  }
-
-  // admin button logic: if no password set, create one; otherwise prompt to login
-  adminBtn &&
-    adminBtn.addEventListener("click", async () => {
-      try {
-        const stored = localStorage.getItem(ADMIN_PW_KEY);
-        if (!stored) {
-          const p1 = prompt(
-            "Chưa có mật khẩu admin. Vui lòng tạo mật khẩu admin:"
-          );
-          if (!p1) return alert("Mật khẩu không được rỗng.");
-          const p2 = prompt("Xác nhận mật khẩu admin:");
-          if (p1 !== p2) return alert("Mật khẩu không khớp.");
-          const h = await hashPassword(p1);
-          localStorage.setItem(ADMIN_PW_KEY, h);
-          sessionStorage.setItem(ADMIN_SESSION, "1");
-          updateAdminUI();
-          renderAll();
-          return alert("Mật khẩu admin đã được tạo và bạn đã đăng nhập.");
-        }
-
-        const attempt = prompt("Nhập mật khẩu admin:");
-        if (!attempt) return;
-        const h2 = await hashPassword(attempt);
-        if (h2 === stored) {
-          sessionStorage.setItem(ADMIN_SESSION, "1");
-          updateAdminUI();
-          renderAll();
-          alert("Đăng nhập admin thành công.");
-        } else {
-          alert("Mật khẩu không đúng.");
-        }
-      } catch (e) {
-        console.error("Admin action failed", e);
-        alert("Lỗi khi xử lý admin.");
-      }
-    });
-
-  adminLogout &&
-    adminLogout.addEventListener("click", () => {
-      sessionStorage.removeItem(ADMIN_SESSION);
-      updateAdminUI();
-      renderAll();
-    });
-
-  // set UI on startup
-  updateAdminUI();
-
   function loadList() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -107,6 +30,42 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Failed to load submissions", e);
       return [];
     }
+  }
+
+  // Make this device admin by default (sessionStorage). No admin UI required.
+  try {
+    sessionStorage.setItem(ADMIN_SESSION, "1");
+  } catch (e) {
+    console.error("Could not set admin session", e);
+  }
+
+  function isAdmin() {
+    return sessionStorage.getItem(ADMIN_SESSION) === "1";
+  }
+
+  // device name helpers
+  function getDeviceName() {
+    try {
+      let name = localStorage.getItem(DEVICE_NAME_KEY);
+      if (!name) {
+        // create a short friendly name from client id
+        name =
+          "Device-" +
+          (CLIENT_ID
+            ? CLIENT_ID.slice(-6)
+            : Math.random().toString(36).slice(2, 8));
+        localStorage.setItem(DEVICE_NAME_KEY, name);
+      }
+      return name;
+    } catch (e) {
+      console.error("Failed to read/write device name", e);
+      return null;
+    }
+  }
+  const DEVICE_NAME = getDeviceName();
+  if (deviceNameDisplay && isAdmin()) {
+    deviceNameDisplay.style.display = "";
+    deviceNameDisplay.textContent = `Thiết bị: ${DEVICE_NAME}`;
   }
 
   function saveList(list) {
@@ -125,6 +84,105 @@ document.addEventListener("DOMContentLoaded", () => {
           "'": "&#39;",
         }[c])
     );
+  }
+
+  // Validate form data. Returns { ok: boolean, errors: string[], invalidIds: string[] }
+  function validateForm(fd) {
+    const errors = [];
+    const invalid = [];
+
+    const name = (fd.get("name") || "").toString().trim();
+    const gender = (fd.get("gender") || "").toString().trim();
+    const date = (fd.get("date") || "").toString().trim();
+    const address = (fd.get("address") || "").toString().trim();
+    const face = (fd.get("face") || "").toString().trim();
+    const phone = (fd.get("phone") || "").toString().trim();
+    const subject = (fd.get("subject") || "").toString().trim();
+
+    if (!name || name.length < 2) {
+      errors.push("Họ và tên phải có ít nhất 2 ký tự.");
+      invalid.push("name");
+    }
+
+    if (!subject) {
+      errors.push("Vui lòng chọn Tổ hợp.");
+      invalid.push("subject");
+    }
+
+    if (!address) {
+      errors.push("Địa chỉ không được để trống.");
+      invalid.push("address");
+    }
+
+    if (phone) {
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 9 || digits.length > 15) {
+        errors.push("Số điện thoại không hợp lệ (9-15 chữ số).");
+        invalid.push("phone");
+      }
+    } else {
+      errors.push("Số điện thoại là bắt buộc.");
+      invalid.push("phone");
+    }
+
+    if (date) {
+      const d = new Date(date);
+      const now = new Date();
+      if (isNaN(d.getTime())) {
+        errors.push("Ngày sinh không hợp lệ.");
+        invalid.push("date");
+      } else if (d > now) {
+        errors.push("Ngày sinh không thể lớn hơn ngày hiện tại.");
+        invalid.push("date");
+      }
+    }
+
+    if (face) {
+      const lower = face.toLowerCase();
+      if (!lower.includes("facebook") && !/^https?:\/\//.test(face)) {
+        errors.push('Facebook phải là đường dẫn hoặc chứa "facebook".');
+        invalid.push("face");
+      }
+    }
+
+    // Ensure gender is one of allowed values
+    if (gender && !["male", "female", "other"].includes(gender)) {
+      errors.push("Giới tính không hợp lệ.");
+      invalid.push("gender");
+    }
+
+    return { ok: errors.length === 0, errors, invalidIds: invalid };
+  }
+
+  function showFormErrors(result) {
+    const container = document.getElementById("formErrors");
+    // clear previous highlights
+    ["name", "gender", "date", "address", "face", "phone", "subject"].forEach(
+      (id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("invalid");
+      }
+    );
+
+    if (!container) return;
+    if (result.ok) {
+      container.innerHTML = "";
+      return;
+    }
+    const ul = document.createElement("ul");
+    result.errors.forEach((msg) => {
+      const li = document.createElement("li");
+      li.textContent = msg;
+      ul.appendChild(li);
+    });
+    container.innerHTML = "";
+    container.appendChild(ul);
+
+    // highlight invalid fields
+    result.invalidIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("invalid");
+    });
   }
 
   function renderAll() {
@@ -155,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
       )}</div>
       `;
 
-      // Only admin can delete entries
+      // Only admin can delete entries (this device is admin by default)
       if (isAdmin()) {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -168,6 +226,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         li.appendChild(btn);
       }
+      // Show owner name only to admin
+      if (isAdmin() && item.ownerName) {
+        const ownerDiv = document.createElement("div");
+        ownerDiv.className = "owner-name";
+        ownerDiv.textContent = `Đăng bởi: ${item.ownerName}`;
+        li.appendChild(ownerDiv);
+      }
       ul.appendChild(li);
     });
 
@@ -177,9 +242,15 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const fd = new FormData(form);
+    const valid = validateForm(fd);
+    showFormErrors(valid);
+    if (!valid.ok) return; // don't save if invalid
     const entry = {};
     for (const [k, v] of fd.entries()) entry[k] = v;
     entry.id = Date.now();
+    // ownership metadata
+    entry.owner = CLIENT_ID;
+    entry.ownerName = DEVICE_NAME;
 
     const list = loadList();
     list.unshift(entry); // newest first
