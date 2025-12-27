@@ -210,7 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentAdminDisplay = document.getElementById("currentAdminDisplay");
     const claimBtn = document.getElementById("claimAdminBtn");
     const deviceNameEl = document.getElementById("deviceNameDisplay");
+    const adminArea = document.querySelector(".admin-area");
     if (!useFirestore || !adminRef) {
+      // No Firestore: keep local-admin behavior visible on this device
+      if (adminArea) adminArea.style.display = "";
       if (currentAdminDisplay)
         currentAdminDisplay.textContent = "Quản trị: (local)";
       if (claimBtn) claimBtn.style.display = "none";
@@ -218,29 +221,42 @@ document.addEventListener("DOMContentLoaded", () => {
         deviceNameEl.style.display = "";
         deviceNameEl.textContent = `Thiết bị: ${DEVICE_NAME}`;
       }
+      updateLocalAdminUI();
       return;
     }
     if (remoteAdmin && remoteAdmin.adminId) {
-      if (currentAdminDisplay) {
-        currentAdminDisplay.textContent = `Quản trị: ${
-          remoteAdmin.adminName || remoteAdmin.adminId
-        }`;
-      }
-      // update local admin UI state (show device name if this device is admin)
-      updateLocalAdminUI();
-      if (claimBtn) claimBtn.style.display = "none";
-      if (deviceNameEl) {
-        if (remoteAdmin.adminId === CLIENT_ID) {
+      // There is a remote admin. Only the admin device should show admin UI.
+      if (remoteAdmin.adminId === CLIENT_ID) {
+        // this device is the admin — show admin area and device name
+        if (adminArea) adminArea.style.display = "";
+        if (currentAdminDisplay)
+          currentAdminDisplay.textContent = `Quản trị: ${
+            remoteAdmin.adminName || remoteAdmin.adminId
+          }`;
+        if (claimBtn) claimBtn.style.display = "none";
+        if (deviceNameEl) {
           deviceNameEl.style.display = "";
           deviceNameEl.textContent = `Thiết bị: ${DEVICE_NAME}`;
-        } else {
-          deviceNameEl.style.display = "none";
         }
+        // allow local admin UI on the admin device if desired
+        updateLocalAdminUI();
+      } else {
+        // not the admin: hide entire admin area so other devices don't show admin controls
+        if (adminArea) adminArea.style.display = "none";
       }
     } else {
-      if (currentAdminDisplay)
-        currentAdminDisplay.textContent = "Quản trị: (chưa có)";
-      if (claimBtn) claimBtn.style.display = "";
+      // No admin set yet — only allow claiming from devices that have local admin
+      // This prevents other devices from seeing the claim button.
+      const canClaim = localAdminExists() || isLocalAdminLoggedIn();
+      if (canClaim) {
+        if (adminArea) adminArea.style.display = "";
+        if (currentAdminDisplay)
+          currentAdminDisplay.textContent = "Quản trị: (chưa có)";
+        if (claimBtn) claimBtn.style.display = "";
+      } else {
+        // hide admin area completely on devices that cannot claim
+        if (adminArea) adminArea.style.display = "none";
+      }
       if (deviceNameEl) deviceNameEl.style.display = "none";
     }
   }
